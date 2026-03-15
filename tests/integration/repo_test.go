@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
@@ -558,4 +560,48 @@ func TestGenerateRepository(t *testing.T) {
 	exist, err = util.IsExist(repo_model.RepoPath(user2.Name, generatedRepo.Name))
 	assert.NoError(t, err)
 	assert.False(t, exist)
+}
+
+func TestGenerateRepositoryPreservesLabels(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo44 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 44})
+
+	// Generate new repo from template
+	generatedRepo, err := repo_service.GenerateRepository(t.Context(), user2, user2, repo44, repo_service.GenerateRepoOptions{
+		Name:        "generated-labels-from-template-44",
+		GitContent:  true,
+		IssueLabels: true,
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, generatedRepo)
+
+	// Fetch labels from the generated repo
+	generatedLabels, err := issues_model.GetLabelsByRepoID(t.Context(), generatedRepo.ID, "", db.ListOptions{})
+	assert.NoError(t, err)
+
+	// Fetch labels from the template repo
+	templateLabels, err := issues_model.GetLabelsByRepoID(t.Context(), repo44.ID, "", db.ListOptions{})
+	assert.NoError(t, err)
+
+	assert.Len(t, generatedLabels, len(templateLabels))
+
+	templateLabelMap := make(map[string]*issues_model.Label)
+	for _, l := range templateLabels {
+		templateLabelMap[l.Name] = l
+	}
+
+	for _, gl := range generatedLabels {
+		tl, ok := templateLabelMap[gl.Name]
+		assert.True(t, ok)
+		assert.Equal(t, tl.Exclusive, gl.Exclusive)
+		assert.Equal(t, tl.ExclusiveOrder, gl.ExclusiveOrder)
+		assert.Equal(t, tl.Color, gl.Color)
+		assert.Equal(t, tl.Description, gl.Description)
+	}
+
+	// Cleanup
+	err = repo_service.DeleteRepositoryDirectly(t.Context(), generatedRepo.ID)
+	assert.NoError(t, err)
 }

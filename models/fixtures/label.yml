@@ -107,3 +107,27 @@
   num_issues: 0
   num_closed_issues: 0
   archived_unix: 0
+
+-
+  id: 11
+  repo_id: 44
+  org_id: 0
+  name: priority/low
+  color: '#0000ee'
+  exclusive: true
+  exclusive_order: 1
+  num_issues: 0
+  num_closed_issues: 0
+  archived_unix: 0
+
+-
+  id: 12
+  repo_id: 44
+  org_id: 0
+  name: priority/high
+  color: '#ee0000'
+  exclusive: true
+  exclusive_order: 2
+  num_issues: 0
+  num_closed_issues: 0
+  archived_unix: 0
