@@ -550,7 +550,7 @@ func TestGenerateRepository(t *testing.T) {
 
 	generatedLabels, err := issues_model.GetLabelsByRepoID(t.Context(), generatedRepo.ID, "", db.ListOptions{})
 	require.NoError(t, err)
-	require.Equal(t, len(tmplRepoLabels), len(generatedLabels))
+	require.Len(t, generatedLabels, len(tmplRepoLabels))
 	for i, tmplLabel := range tmplRepoLabels {
 		genLabel := generatedLabels[i]
 		assert.Equal(t, tmplLabel.Name, genLabel.Name)
